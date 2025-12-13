@@ -1,6 +1,6 @@
 CLone repo
 ```
-git clone https://github.com/bbaranoff/brute_ubuntu_lpe
+git clone https://github.com/bbaranoff/brute_ubuntu_lpe && cd brute_ubuntu_lpe
 ```
 
 Download dictionnary

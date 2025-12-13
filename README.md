@@ -86,7 +86,9 @@ Complété
 
 ```
 
-```untu@swift:~/brute_ubuntu_lpe$ time bash brute.sh rockyou.txt
+Benchmarks
+```
+Ubuntu@swift:~/brute_ubuntu_lpe$ time bash brute.sh rockyou.txt
 🔍 Bruteforce en cours...
 📁 Wordlist: rockyou.txt
 📊 Mode verbose: DÉSACTIVÉ

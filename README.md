@@ -41,7 +41,9 @@ Complété
 ✅ Accès root confirmé !
 🚀 Lancement du shell root...
 
-```erbose mo
+```
+
+Verbose mode
 ```bash
 ubuntu@swift:~/brute_ubuntu_lpe$ bash brute.sh rockyou.txt --verbose🔍 Bruteforce en cours...
 📁 Wordlist: rockyou.txt

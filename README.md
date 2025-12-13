@@ -18,6 +18,11 @@ Bruteforce
 bash brute.sh rockyou.txt
 ```
 
+Mode verbeux (avec la liste de passwords qui défilent)
+```
+bash brute.sh rockyou.txt --verbose
+```
+
 
 
 # Ubuntu LPE Bruteforce Tool (CWE-208 Based)

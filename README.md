@@ -61,6 +61,15 @@ Statistiquement, sur un échantillon de 100 machines Linux non durcies :
 
 Ce script est destiné à des fins de tests d'intrusion et d'audit de sécurité uniquement. L'exploitation des vulnérabilités de type CWE-208 souligne l'importance d'utiliser des fonctions de comparaison de temps constant et des délais d'authentification fixes.
 
+```bash
+nirvana@acer:~/brute_ubuntu_lpe$ python bruteforce_ultra.py --wordlist rockyou.txt
+🚀 Bruteforce it !!! | Workers: 16 | Oracle: 0.08s
+------------------------------------------------------------
+[*] Tentatives : 4970 | Speed: ~175 mdp/s | Test: manuelito   
+
+✅ TROUVÉ : limpbizkit
+[*] Stats finales : 4972 tests en 28.25s (176.02 mdp/s)
+```
 
 ```
 

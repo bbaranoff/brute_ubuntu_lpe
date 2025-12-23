@@ -32,8 +32,8 @@ Les variables doivent être ajustées selon la latence de votre machine :
 # 1. Charger la wordlist en RAM pour supprimer la latence disque
 cp rockyou.txt /dev/shm/
 
-# 2. Lancer avec une priorité système maximale
-sudo nice -n -20 python3 bruteforce_ultra.py --wordlist /dev/shm/rockyou.txt
+# 2. Lancer le script
+python3 bruteforce_ultra.py --wordlist /dev/shm/rockyou.txt
 
 ```
 

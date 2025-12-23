@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # 32 workers permettent de saturer les 16 coeurs pendant les attentes I/O
 MAX_WORKERS = 16
 # Oracle abaissé à 0.07s car /bin/true répond beaucoup plus vite que whoami
-ORACLE_TIMEOUT = 0.080
+ORACLE_TIMEOUT = 0.087
 # ------------------------------
 
 def check_pw(pw):
